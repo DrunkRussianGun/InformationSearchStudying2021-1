@@ -55,7 +55,7 @@ def configure_logging():
 
 
 def download(url):
-	response = requests.get(url, headers = {"accept": "text/html"})
+	response = requests.get(url, headers = {"accept": "text/html"}, stream = True)
 
 	content_type = response.headers.get("content-type")
 	if content_type is None or "html" not in content_type:
