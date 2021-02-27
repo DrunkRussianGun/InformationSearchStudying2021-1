@@ -1,6 +1,7 @@
 import logging
 import sys
 from collections import deque
+from urllib.parse import urljoin
 
 import requests
 import validators
@@ -27,7 +28,7 @@ def main():
 
 		downloaded_pages[page_url] = page
 		
-		child_urls = set(get_link_urls(page))
+		child_urls = set(get_link_urls(page_url, page))
 		child_urls = child_urls.difference(seen_page_urls)
 
 		page_urls_to_download.extend(child_urls)
@@ -63,12 +64,13 @@ def download(url):
 	return response.text
 
 
-def get_link_urls(html):
+def get_link_urls(current_url, html):
 	if html.body is None:
 		return []
 
 	a_tags = html.body.find_all("a")
 	urls = (tag.get("href", default = "") for tag in a_tags)
+	urls = (urljoin(current_url, url) for url in urls)
 	valid_urls = filter(lambda url: validators.url(url), urls)
 	return valid_urls
 
