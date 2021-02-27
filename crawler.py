@@ -23,7 +23,7 @@ def main():
 	while len(page_urls_to_download) > 0 and len(downloaded_pages) < max_pages_count:
 		page_url = page_urls_to_download.popleft()
 		logging.info("Скачиваю страницу " + page_url)
-		page = download(page_url)
+		page = download(page_url, seen_page_urls)
 		page = BeautifulSoup(page, "html.parser")
 
 		downloaded_pages[page_url] = page
@@ -54,8 +54,11 @@ def configure_logging():
 	root_logger.addHandler(console_handler)
 
 
-def download(url):
+def download(url, seen_page_urls):
 	response = requests.get(url, headers = {"accept": "text/html"}, stream = True)
+
+	if response.url != url and response.url in seen_page_urls:
+		return None
 
 	content_type = response.headers.get("content-type")
 	if content_type is None or "html" not in content_type:
