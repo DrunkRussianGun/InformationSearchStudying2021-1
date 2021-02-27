@@ -1,6 +1,8 @@
 import logging
+import os
 import re as regex
 import sys
+import traceback
 from collections import deque
 from urllib.parse import urljoin
 
@@ -33,18 +35,35 @@ def main():
 		page_url = page_urls_to_download.popleft()
 		logging.info("Скачиваю страницу " + page_url)
 		page = download(page_url, seen_page_urls)
-		page = BeautifulSoup(page, "html.parser")
-		page_text = get_text(page)
+		if page is None:
+			continue
+		if issubclass(type(page), Exception):
+			logging.warning(f"Не смог скачать страницу {page_url}:" + os.linesep + format_exception(page))
+			continue
 
+		try:
+			page_html = BeautifulSoup(page, "html.parser")
+		except Exception:
+			logging.warning(
+				f"Не смог распознать страницу {page_url} как HTML:" + os.linesep
+				+ traceback.format_exc() + os.linesep + "Полученная страница:" + os.linesep + page)
+			continue
+
+		page_text = get_text(page_html)
 		if count_words(page_text) >= min_words_per_page_count:
 			downloaded_pages[page_url] = page_text
 
 			logging.info("Сохраняю страницу " + page_url)
 			id_ = documents.get_new_id()
 			document = Document(id_, page_url, page_text)
-			documents.create(document)
+			try:
+				documents.create(document)
+			except Exception:
+				logging.error(
+					f"Не смог сохранить страницу {page_url} под номером {id_}:" + os.linesep
+					+ traceback.format_exc())
 
-		child_urls = set(get_link_urls(page_url, page))
+		child_urls = set(get_link_urls(page_url, page_html))
 		child_urls = child_urls.difference(seen_page_urls)
 
 		page_urls_to_download.extend(child_urls)
@@ -70,17 +89,26 @@ def configure_logging():
 	root_logger.addHandler(console_handler)
 
 
+def format_exception(exception):
+	return "\n".join(traceback.format_exception_only(type(exception), exception))
+
+
 def download(url, seen_page_urls):
-	response = requests.get(url, headers = {"accept": "text/html"}, stream = True)
+	try:
+		response = requests.get(url, headers = {"accept": "text/html"}, stream = True)
 
-	if response.url != url and response.url in seen_page_urls:
-		return None
+		if response.url != url and response.url in seen_page_urls:
+			return None
 
-	content_type = response.headers.get("content-type")
-	if content_type is None or "html" not in content_type:
-		return None
+		content_type = response.headers.get("content-type")
+		if content_type is None or len(content_type) == 0:
+			return ValueError("Получил страницу с пустым Content-Type")
+		if "html" not in content_type:
+			return ValueError("Получил страницу с неизвестным Content-Type: " + content_type)
 
-	return response.text
+		return response.text
+	except Exception as error:
+		return error
 
 
 def get_link_urls(current_url, html):
