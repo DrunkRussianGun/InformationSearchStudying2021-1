@@ -1,5 +1,12 @@
 import logging
 import sys
+from collections import deque
+
+import requests
+import validators
+from bs4 import BeautifulSoup
+
+max_pages_count = 100
 
 
 def main():
@@ -8,6 +15,23 @@ def main():
 		return
 
 	configure_logging()
+
+	page_urls_to_download = deque([root_page_url])
+	seen_page_urls = {root_page_url}
+	downloaded_pages = {}
+	while len(page_urls_to_download) > 0 and len(downloaded_pages) < max_pages_count:
+		page_url = page_urls_to_download.popleft()
+		logging.info("Скачиваю страницу " + page_url)
+		page = download(page_url)
+		page = BeautifulSoup(page, "html.parser")
+
+		downloaded_pages[page_url] = page
+		
+		child_urls = set(get_link_urls(page))
+		child_urls = child_urls.difference(seen_page_urls)
+
+		page_urls_to_download.extend(child_urls)
+		seen_page_urls = seen_page_urls.union(child_urls)
 
 
 def get_root_page_url_or_print_help():
@@ -27,6 +51,26 @@ def configure_logging():
 	console_handler.setFormatter(log_formatter)
 	console_handler.setLevel(logging.INFO)
 	root_logger.addHandler(console_handler)
+
+
+def download(url):
+	response = requests.get(url, headers = {"accept": "text/html"})
+
+	content_type = response.headers.get("content-type")
+	if content_type is None or "html" not in content_type:
+		return None
+
+	return response.text
+
+
+def get_link_urls(html):
+	if html.body is None:
+		return []
+
+	a_tags = html.body.find_all("a")
+	urls = (tag.get("href", default = "") for tag in a_tags)
+	valid_urls = filter(lambda url: validators.url(url), urls)
+	return valid_urls
 
 
 if __name__ == '__main__':
