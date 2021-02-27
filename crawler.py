@@ -8,6 +8,9 @@ import requests
 import validators
 from bs4 import BeautifulSoup
 
+from implementation.document import Document
+from implementation.document_repository import DocumentRepository
+
 max_pages_count = 100
 min_words_per_page_count = 1000
 
@@ -18,6 +21,10 @@ def main():
 		return
 
 	configure_logging()
+
+	logging.info("Инициализирую хранилище документов")
+	documents = DocumentRepository()
+	documents.delete_all()
 
 	page_urls_to_download = deque([root_page_url])
 	seen_page_urls = {root_page_url}
@@ -31,6 +38,11 @@ def main():
 
 		if count_words(page_text) >= min_words_per_page_count:
 			downloaded_pages[page_url] = page_text
+
+			logging.info("Сохраняю страницу " + page_url)
+			id_ = documents.get_new_id()
+			document = Document(id_, page_url, page_text)
+			documents.create(document)
 
 		child_urls = set(get_link_urls(page_url, page))
 		child_urls = child_urls.difference(seen_page_urls)
