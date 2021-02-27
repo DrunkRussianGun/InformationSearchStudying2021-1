@@ -1,4 +1,5 @@
 import logging
+import re as regex
 import sys
 from collections import deque
 from urllib.parse import urljoin
@@ -8,6 +9,7 @@ import validators
 from bs4 import BeautifulSoup
 
 max_pages_count = 100
+min_words_per_page_count = 1000
 
 
 def main():
@@ -25,9 +27,11 @@ def main():
 		logging.info("Скачиваю страницу " + page_url)
 		page = download(page_url, seen_page_urls)
 		page = BeautifulSoup(page, "html.parser")
+		page_text = get_text(page)
 
-		downloaded_pages[page_url] = page
-		
+		if count_words(page_text) >= min_words_per_page_count:
+			downloaded_pages[page_url] = page_text
+
 		child_urls = set(get_link_urls(page_url, page))
 		child_urls = child_urls.difference(seen_page_urls)
 
@@ -76,6 +80,29 @@ def get_link_urls(current_url, html):
 	urls = (urljoin(current_url, url) for url in urls)
 	valid_urls = filter(lambda url: validators.url(url), urls)
 	return valid_urls
+
+
+def get_text(html):
+	text = html.get_text(" ")
+	text = remove_odd_whitespaces(text)
+	return text
+
+
+def remove_odd_whitespaces(text):
+	text = text.strip()
+
+	# Заменяем каждую последовательность пробельных символов на единственный пробел,
+	# за исключением переносов строк
+	text = regex.sub("((?!\\n)\\s)+", " ", text)
+	# Убираем пробельные символы вокруг переносов строк
+	# и заменяем каждую последовательность переносов строк на единственный перенос строки
+	text = regex.sub("\\s*\\n\\s*", "\n", text)
+
+	return text
+
+
+def count_words(text):
+	return len(text.split())
 
 
 if __name__ == '__main__':
