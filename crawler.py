@@ -10,8 +10,7 @@ import requests
 import validators
 from bs4 import BeautifulSoup
 
-from implementation.document import Document
-from implementation.document_repository import DocumentRepository
+from implementation.document import Document, DocumentRepository
 
 max_pages_count = 100
 min_words_per_page_count = 1000
