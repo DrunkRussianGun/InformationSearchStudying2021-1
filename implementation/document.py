@@ -12,27 +12,18 @@ class Document:
 
 class DocumentRepository(metaclass = Singleton):
 	__file_encoding = "utf-8"
-	__documents_dir = "documents"
+	__index_file_name = "index.txt"
+	__documents_path = Path("documents")
 
 	def __init__(self):
-		self.__index = open("index.txt", "a+", encoding = DocumentRepository.__file_encoding)
-		self.__index.seek(0)
-		Path(DocumentRepository.__documents_dir).mkdir(parents = True, exist_ok = True)
-
-		index_entries = [self.__get_index_entry(line) for line in self.__index.readlines()]
-		self.__id_to_url_map = {}
-		for id_, url in index_entries:
-			path_to_document = self.__get_path_to_document(id_)
-			if Path(path_to_document).is_file():
-				self.__id_to_url_map[id_] = url
+		self.__index_file = open(
+			DocumentRepository.__index_file_name,
+			"a+",
+			encoding = DocumentRepository.__file_encoding)
+		DocumentRepository.__documents_path.mkdir(parents = True, exist_ok = True)
+		self.__initialize_index_from_file(True)
 
 		self.__max_id = max(self.__id_to_url_map.keys(), default = -1)
-
-		if len(self.__id_to_url_map) != len(index_entries):
-			self.__index.truncate(0)
-			for id_, url in self.__id_to_url_map.items():
-				self.__add_index_entry(id_, url)
-			self.__index.flush()
 
 	def get_new_id(self):
 		self.__max_id += 1
@@ -47,12 +38,12 @@ class DocumentRepository(metaclass = Singleton):
 				f"Не смог создать документ с номером {document.id_} в хранилище, "
 				+ f"т. к. документ с таким номером уже существует")
 
-		path_to_document = self.__get_path_to_document(document.id_)
-		with open(path_to_document, "w", encoding = DocumentRepository.__file_encoding) as file:
+		document_full_file_name = self.__get_document_full_file_name(document.id_)
+		with open(document_full_file_name, "w", encoding = DocumentRepository.__file_encoding) as file:
 			file.write(document.text)
 
-		self.__add_index_entry(document.id_, document.url)
-		self.__index.flush()
+		self.__append_index_line_to_file(document.id_, document.url)
+		self.__index_file.flush()
 
 		self.__id_to_url_map[document.id_] = document.url
 
@@ -61,23 +52,44 @@ class DocumentRepository(metaclass = Singleton):
 			return
 
 		for id_ in self.__id_to_url_map:
-			path_to_document = self.__get_path_to_document(id_)
-			Path(path_to_document).unlink(True)
+			document_full_file_name = self.__get_document_full_file_name(id_)
+			Path(document_full_file_name).unlink(True)
 
-		self.__index.truncate(0)
-		self.__index.flush()
+		self.__index_file.truncate(0)
+		self.__index_file.flush()
 
 		self.__id_to_url_map = {}
 		self.__max_id = -1
 
-	def __add_index_entry(self, id_, url):
-		self.__index.write(f"{id_} {url}\n")
+	def __initialize_index_from_file(self, recreate_file_if_inconsistent):
+		self.__index_file.seek(0)
+		file_lines = self.__index_file.readlines()
+
+		self.__id_to_url_map = {}
+		for file_line in file_lines:
+			index_line = self.__parse_file_line(file_line)
+			id_, url = int(index_line[0]), index_line[1]
+
+			document_full_file_name = self.__get_document_full_file_name(id_)
+			if Path(document_full_file_name).is_file():
+				self.__id_to_url_map[id_] = url
+
+		if recreate_file_if_inconsistent and len(self.__id_to_url_map) != len(file_lines):
+			self.__recreate_index_file()
+
+	def __recreate_index_file(self):
+		self.__index_file.truncate(0)
+		for id_, url in self.__id_to_url_map.items():
+			self.__append_index_line_to_file(id_, url)
+		self.__index_file.flush()
+
+	def __append_index_line_to_file(self, id_, url):
+		self.__index_file.write(f"{id_} {url}\n")
 
 	@staticmethod
-	def __get_index_entry(file_line):
-		splitted_line = file_line.rstrip("\n").split(" ")
-		return int(splitted_line[0]), splitted_line[1]
+	def __parse_file_line(file_line):
+		return file_line.rstrip("\n").split(" ")
 
 	@staticmethod
-	def __get_path_to_document(id_):
-		return f"{DocumentRepository.__documents_dir}/{id_}.txt"
+	def __get_document_full_file_name(id_):
+		return DocumentRepository.__documents_path.joinpath(f"{id_}.txt")
