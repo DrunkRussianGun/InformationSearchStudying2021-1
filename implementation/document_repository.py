@@ -3,6 +3,13 @@ from pathlib import Path
 from implementation.singleton import Singleton
 
 
+class Document:
+	def __init__(self, id_, url, text):
+		self.id_ = id_
+		self.url = url
+		self.text = text
+
+
 class DocumentRepository(metaclass = Singleton):
 	__file_encoding = "utf-8"
 	__documents_dir = "documents"
