@@ -10,6 +10,7 @@ import requests
 import validators
 from bs4 import BeautifulSoup
 
+from implementation.common import configure_logging, format_exception
 from implementation.document import Document, DocumentRepository
 
 max_pages_count = 100
@@ -75,21 +76,6 @@ def get_root_page_url_or_print_help():
 		return None
 
 	return sys.argv[1]
-
-
-def configure_logging():
-	log_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-	root_logger = logging.getLogger()
-	root_logger.setLevel(logging.DEBUG)
-
-	console_handler = logging.StreamHandler()
-	console_handler.setFormatter(log_formatter)
-	console_handler.setLevel(logging.INFO)
-	root_logger.addHandler(console_handler)
-
-
-def format_exception(exception):
-	return "\n".join(traceback.format_exception_only(type(exception), exception))
 
 
 def download(url, seen_page_urls):
