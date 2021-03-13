@@ -10,8 +10,8 @@ import requests
 import validators
 from bs4 import BeautifulSoup
 
-from implementation.infrastructure import configure_logging, format_exception
 from implementation.document import Document, DocumentRepository
+from implementation.infrastructure import configure_logging, format_exception
 
 log = logging.getLogger()
 
