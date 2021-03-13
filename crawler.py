@@ -1,7 +1,5 @@
 import logging
 import os
-import re as regex
-import string
 import sys
 from collections import deque
 from urllib.parse import urljoin
@@ -10,12 +8,11 @@ import requests
 import validators
 from bs4 import BeautifulSoup
 
-from implementation.document import Document, DocumentRepository
+from implementation.common import delete_extra_whitespaces
+from implementation.document import Document, DocumentRepository, pages_repository_name
 from implementation.infrastructure import configure_logging, format_exception
 
 log = logging.getLogger()
-
-punctuation_removing_map = {ord(symbol): " " for symbol in string.punctuation + "«»—–“”•☆№\""}
 
 max_pages_count = 100
 min_words_per_page_count = 1000
@@ -32,9 +29,9 @@ def main():
 
 
 def run(root_page_url):
-	log.info("Инициализирую хранилище документов")
-	documents = DocumentRepository()
-	documents.delete_all()
+	log.info("Инициализирую хранилище страниц")
+	pages = DocumentRepository(pages_repository_name)
+	pages.delete_all()
 
 	page_urls_to_download = deque([root_page_url])
 	seen_page_urls = {root_page_url}
@@ -62,10 +59,10 @@ def run(root_page_url):
 			downloaded_pages[page_url] = page_text
 
 			log.info("Сохраняю страницу " + page_url)
-			id_ = documents.get_new_id()
-			document = Document(id_, page_url, page_text)
+			id_ = pages.get_new_id()
+			page = Document(id_, page_url, page_text)
 			try:
-				documents.create(document)
+				pages.create(page)
 			except Exception as exception:
 				log.error(
 					f"Не смог сохранить страницу {page_url} под номером {id_}:" + os.linesep
@@ -117,25 +114,7 @@ def get_link_urls(current_url, html):
 
 def get_text(html):
 	text = html.get_text(" ")
-	text = preprocess_text(text)
-	return text
-
-
-def preprocess_text(text):
-	text = text.strip()
-
-	# Убираем URL
-	text = regex.sub("((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?", " ", text)
-	# Убираем знаки пунктуации
-	text = text.translate(punctuation_removing_map)
-
-	# Заменяем каждую последовательность пробельных символов на единственный пробел,
-	# за исключением переносов строк
-	text = regex.sub("((?!\\n)\\s)+", " ", text)
-	# Убираем пробельные символы вокруг переносов строк
-	# и заменяем каждую последовательность переносов строк на единственный перенос строки
-	text = regex.sub("\\s*\\n\\s*", "\n", text)
-
+	text = delete_extra_whitespaces(text)
 	return text
 
 
