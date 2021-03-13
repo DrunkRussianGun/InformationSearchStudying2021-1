@@ -1,5 +1,7 @@
 import logging
 import os
+import re as regex
+import string
 
 import en_core_web_md
 import ru_core_news_md
@@ -14,6 +16,7 @@ from implementation.infrastructure import configure_logging, format_exception
 
 log = logging.getLogger()
 
+punctuation_whitespacing_map = {ord(symbol): " " for symbol in string.punctuation + "«»—–“”•☆№\""}
 language_processors_cache = {}
 
 
@@ -35,6 +38,8 @@ def run():
 	language_detector = get_language_detector()
 	for id_ in page_ids:
 		page = pages.get(id_)
+		page.text = preprocess_text(page.text)
+
 		page_language = language_detector(page.text)._.language.get("language")
 		if page_language is not None:
 			log.info(f"Язык страницы {page.url}: {page_language}")
@@ -84,6 +89,15 @@ def get_language_processor(language_code):
 
 	language_processors_cache[language_code] = processor
 	return processor
+
+
+def preprocess_text(text):
+	# Убираем URL
+	text = regex.sub("((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?", " ", text)
+	# Меняем знаки пунктуации на пробелы
+	text = text.translate(punctuation_whitespacing_map)
+
+	return text
 
 
 if __name__ == '__main__':

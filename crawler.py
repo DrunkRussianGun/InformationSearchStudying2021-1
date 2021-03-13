@@ -1,7 +1,5 @@
 import logging
 import os
-import re as regex
-import string
 import sys
 from collections import deque
 from urllib.parse import urljoin
@@ -15,8 +13,6 @@ from implementation.document import Document, DocumentRepository, pages_reposito
 from implementation.infrastructure import configure_logging, format_exception
 
 log = logging.getLogger()
-
-punctuation_whitespacing_map = {ord(symbol): " " for symbol in string.punctuation + "«»—–“”•☆№\""}
 
 max_pages_count = 100
 min_words_per_page_count = 1000
@@ -118,18 +114,7 @@ def get_link_urls(current_url, html):
 
 def get_text(html):
 	text = html.get_text(" ")
-	text = preprocess_text(text)
-	return text
-
-
-def preprocess_text(text):
-	# Убираем URL
-	text = regex.sub("((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?", " ", text)
-	# Меняем знаки пунктуации на пробелы
-	text = text.translate(punctuation_whitespacing_map)
-
 	text = delete_extra_whitespaces(text)
-
 	return text
 
 
