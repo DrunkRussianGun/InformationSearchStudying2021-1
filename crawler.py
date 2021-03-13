@@ -23,7 +23,11 @@ def main():
 		return
 
 	configure_logging()
+	
+	run(root_page_url)
 
+
+def run(root_page_url):
 	logging.info("Инициализирую хранилище документов")
 	documents = DocumentRepository()
 	documents.delete_all()
