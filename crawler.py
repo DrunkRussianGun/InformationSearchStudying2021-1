@@ -13,6 +13,8 @@ from bs4 import BeautifulSoup
 from implementation.common import configure_logging, format_exception
 from implementation.document import Document, DocumentRepository
 
+log = logging.getLogger()
+
 max_pages_count = 100
 min_words_per_page_count = 1000
 
@@ -28,7 +30,7 @@ def main():
 
 
 def run(root_page_url):
-	logging.info("Инициализирую хранилище документов")
+	log.info("Инициализирую хранилище документов")
 	documents = DocumentRepository()
 	documents.delete_all()
 
@@ -37,18 +39,18 @@ def run(root_page_url):
 	downloaded_pages = {}
 	while len(page_urls_to_download) > 0 and len(downloaded_pages) < max_pages_count:
 		page_url = page_urls_to_download.popleft()
-		logging.info("Скачиваю страницу " + page_url)
+		log.info("Скачиваю страницу " + page_url)
 		page = download(page_url, seen_page_urls)
 		if page is None:
 			continue
 		if issubclass(type(page), Exception):
-			logging.warning(f"Не смог скачать страницу {page_url}:" + os.linesep + format_exception(page))
+			log.warning(f"Не смог скачать страницу {page_url}:" + os.linesep + format_exception(page))
 			continue
 
 		try:
 			page_html = BeautifulSoup(page, "html.parser")
 		except Exception:
-			logging.warning(
+			log.warning(
 				f"Не смог распознать страницу {page_url} как HTML:" + os.linesep
 				+ traceback.format_exc() + os.linesep + "Полученная страница:" + os.linesep + page)
 			continue
@@ -57,13 +59,13 @@ def run(root_page_url):
 		if count_words(page_text) >= min_words_per_page_count:
 			downloaded_pages[page_url] = page_text
 
-			logging.info("Сохраняю страницу " + page_url)
+			log.info("Сохраняю страницу " + page_url)
 			id_ = documents.get_new_id()
 			document = Document(id_, page_url, page_text)
 			try:
 				documents.create(document)
 			except Exception:
-				logging.error(
+				log.error(
 					f"Не смог сохранить страницу {page_url} под номером {id_}:" + os.linesep
 					+ traceback.format_exc())
 
