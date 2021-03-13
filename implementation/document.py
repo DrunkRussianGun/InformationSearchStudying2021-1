@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from implementation.singleton import Singleton
+from implementation.common import Singleton
 
 
 class Document:
