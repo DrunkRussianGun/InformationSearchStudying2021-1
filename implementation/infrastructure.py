@@ -25,4 +25,3 @@ def configure_logging():
 
 def format_exception(exception):
 	return os.linesep.join(traceback.format_exception_only(type(exception), exception))
-
