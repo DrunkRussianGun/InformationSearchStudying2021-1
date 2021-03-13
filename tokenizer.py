@@ -1,4 +1,5 @@
 import logging
+import os
 
 import en_core_web_md
 import ru_core_news_md
@@ -6,8 +7,9 @@ import spacy
 from spacy import Language
 from spacy_langdetect import LanguageDetector
 
-from implementation.document import DocumentRepository, pages_repository_name, tokenized_texts_repository_name
-from implementation.infrastructure import configure_logging
+from implementation.document import Document, DocumentRepository, pages_repository_name, \
+	tokenized_texts_repository_name
+from implementation.infrastructure import configure_logging, format_exception
 
 log = logging.getLogger()
 
@@ -27,6 +29,7 @@ def run():
 
 	log.info("Инициализирую хранилище токенизированных текстов")
 	tokenized_texts = DocumentRepository(tokenized_texts_repository_name)
+	tokenized_texts.delete_all()
 
 	language_detector = get_language_detector()
 	for id_ in page_ids:
@@ -44,7 +47,14 @@ def run():
 			continue
 		lemmas = [token.lemma_ for token in language_processor(page.text)]
 
-		raise NotImplementedError()
+		tokenized_text = " ".join(lemmas)
+		document = Document(id_, page.url, tokenized_text)
+		try:
+			tokenized_texts.create(document)
+		except Exception as exception:
+			log.error(
+				f"Не смог сохранить токенизированный текст страницы {page.url}:" + os.linesep
+				+ format_exception(exception))
 
 
 def get_language_detector():
