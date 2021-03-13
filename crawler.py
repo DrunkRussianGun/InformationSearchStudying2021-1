@@ -10,12 +10,13 @@ import requests
 import validators
 from bs4 import BeautifulSoup
 
+from implementation.common import delete_extra_whitespaces
 from implementation.document import Document, DocumentRepository, pages_repository_name
 from implementation.infrastructure import configure_logging, format_exception
 
 log = logging.getLogger()
 
-punctuation_removing_map = {ord(symbol): " " for symbol in string.punctuation + "«»—–“”•☆№\""}
+punctuation_whitespacing_map = {ord(symbol): " " for symbol in string.punctuation + "«»—–“”•☆№\""}
 
 max_pages_count = 100
 min_words_per_page_count = 1000
@@ -122,19 +123,12 @@ def get_text(html):
 
 
 def preprocess_text(text):
-	text = text.strip()
-
 	# Убираем URL
 	text = regex.sub("((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?", " ", text)
-	# Убираем знаки пунктуации
-	text = text.translate(punctuation_removing_map)
+	# Меняем знаки пунктуации на пробелы
+	text = text.translate(punctuation_whitespacing_map)
 
-	# Заменяем каждую последовательность пробельных символов на единственный пробел,
-	# за исключением переносов строк
-	text = regex.sub("((?!\\n)\\s)+", " ", text)
-	# Убираем пробельные символы вокруг переносов строк
-	# и заменяем каждую последовательность переносов строк на единственный перенос строки
-	text = regex.sub("\\s*\\n\\s*", "\n", text)
+	text = delete_extra_whitespaces(text)
 
 	return text
 
