@@ -7,6 +7,7 @@ import spacy
 from spacy import Language
 from spacy_langdetect import LanguageDetector
 
+from implementation.common import delete_extra_whitespaces
 from implementation.document import Document, DocumentRepository, pages_repository_name, \
 	tokenized_texts_repository_name
 from implementation.infrastructure import configure_logging, format_exception
@@ -48,6 +49,7 @@ def run():
 		lemmas = [token.lemma_ for token in language_processor(page.text)]
 
 		tokenized_text = " ".join(lemmas)
+		tokenized_text = delete_extra_whitespaces(tokenized_text)
 		document = Document(id_, page.url, tokenized_text)
 		try:
 			tokenized_texts.create(document)
