@@ -9,6 +9,7 @@ class Document:
 
 
 pages_repository_name = "raw_pages"
+tokenized_texts_repository_name = "tokenized_texts"
 
 
 class DocumentRepository():
