@@ -10,7 +10,7 @@ import requests
 import validators
 from bs4 import BeautifulSoup
 
-from implementation.document import Document, DocumentRepository
+from implementation.document import Document, DocumentRepository, pages_repository_name
 from implementation.infrastructure import configure_logging, format_exception
 
 log = logging.getLogger()
@@ -32,9 +32,9 @@ def main():
 
 
 def run(root_page_url):
-	log.info("Инициализирую хранилище документов")
-	documents = DocumentRepository()
-	documents.delete_all()
+	log.info("Инициализирую хранилище страниц")
+	pages = DocumentRepository(pages_repository_name)
+	pages.delete_all()
 
 	page_urls_to_download = deque([root_page_url])
 	seen_page_urls = {root_page_url}
@@ -62,10 +62,10 @@ def run(root_page_url):
 			downloaded_pages[page_url] = page_text
 
 			log.info("Сохраняю страницу " + page_url)
-			id_ = documents.get_new_id()
-			document = Document(id_, page_url, page_text)
+			id_ = pages.get_new_id()
+			page = Document(id_, page_url, page_text)
 			try:
-				documents.create(document)
+				pages.create(page)
 			except Exception as exception:
 				log.error(
 					f"Не смог сохранить страницу {page_url} под номером {id_}:" + os.linesep

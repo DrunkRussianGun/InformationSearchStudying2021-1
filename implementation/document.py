@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from implementation.infrastructure import Singleton
-
 
 class Document:
 	def __init__(self, id_, url, text):
@@ -10,17 +8,23 @@ class Document:
 		self.text = text
 
 
-class DocumentRepository(metaclass = Singleton):
-	__file_encoding = "utf-8"
-	__index_file_name = "index.txt"
-	__documents_path = Path("documents")
+pages_repository_name = "raw_pages"
 
-	def __init__(self):
+
+class DocumentRepository():
+	__file_encoding = "utf-8"
+
+	def __init__(self, name = ""):
+		name = name if len(name) > 0 else "default"
+		repository_path = Path(name)
+		self.__index_full_file_name = repository_path.joinpath("index.txt")
+		self.__documents_path = repository_path.joinpath("documents")
+
+		self.__documents_path.mkdir(parents = True, exist_ok = True)
 		self.__index_file = open(
-			DocumentRepository.__index_file_name,
+			self.__index_full_file_name,
 			"a+",
 			encoding = DocumentRepository.__file_encoding)
-		DocumentRepository.__documents_path.mkdir(parents = True, exist_ok = True)
 		self.__initialize_index_from_file(True)
 
 		self.__max_id = max(self.__id_to_url_map.keys(), default = -1)
@@ -86,10 +90,9 @@ class DocumentRepository(metaclass = Singleton):
 	def __append_index_line_to_file(self, id_, url):
 		self.__index_file.write(f"{id_} {url}\n")
 
+	def __get_document_full_file_name(self, id_):
+		return self.__documents_path.joinpath(f"{id_}.txt")
+
 	@staticmethod
 	def __parse_file_line(file_line):
 		return file_line.rstrip("\n").split(" ")
-
-	@staticmethod
-	def __get_document_full_file_name(id_):
-		return DocumentRepository.__documents_path.joinpath(f"{id_}.txt")
