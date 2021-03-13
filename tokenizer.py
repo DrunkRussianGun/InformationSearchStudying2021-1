@@ -1,5 +1,7 @@
 import logging
 
+import en_core_web_md
+import ru_core_news_md
 import spacy
 from spacy import Language
 from spacy_langdetect import LanguageDetector
@@ -8,6 +10,8 @@ from implementation.document import DocumentRepository, pages_repository_name, t
 from implementation.infrastructure import configure_logging
 
 log = logging.getLogger()
+
+language_processors_cache = {}
 
 
 def main():
@@ -34,6 +38,12 @@ def run():
 			log.warning("Не смог определить язык страницы " + page.url)
 			continue
 
+		language_processor = get_language_processor(page_language)
+		if language_processor is None:
+			log.error("Не нашёл обработчик языка " + page_language)
+			continue
+		lemmas = [token.lemma_ for token in language_processor(page.text)]
+
 		raise NotImplementedError()
 
 
@@ -46,6 +56,22 @@ def get_language_detector():
 	language_detector.add_pipe("sentencizer")
 	language_detector.add_pipe("language_detector")
 	return language_detector
+
+
+def get_language_processor(language_code):
+	processor = language_processors_cache.get(language_code)
+	if processor is not None:
+		return processor
+
+	if language_code == "en":
+		processor = en_core_web_md.load()
+	elif language_code == "ru":
+		processor = ru_core_news_md.load()
+	else:
+		processor = None
+
+	language_processors_cache[language_code] = processor
+	return processor
 
 
 if __name__ == '__main__':
