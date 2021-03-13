@@ -33,8 +33,19 @@ class DocumentRepository():
 		self.__max_id += 1
 		return self.__max_id
 
+	def get_all_ids(self):
+		return self.__id_to_url_map.keys()
+
 	def get(self, id_):
-		raise NotImplementedError()
+		if id_ not in self.__id_to_url_map.keys():
+			return None
+
+		document_full_file_name = self.__get_document_full_file_name(id_)
+		with open(document_full_file_name, "r", encoding = DocumentRepository.__file_encoding) as file:
+			text = file.read()
+
+		url = self.__id_to_url_map[id_]
+		return Document(id_, url, text)
 
 	def create(self, document):
 		if document.id_ in self.__id_to_url_map:
