@@ -115,12 +115,15 @@ def get_link_urls(current_url, html):
 
 def get_text(html):
 	text = html.get_text(" ")
-	text = remove_odd_whitespaces(text)
+	text = preprocess_text(text)
 	return text
 
 
-def remove_odd_whitespaces(text):
+def preprocess_text(text):
 	text = text.strip()
+
+	# Убираем URL
+	text = regex.sub("((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?", " ", text)
 
 	# Заменяем каждую последовательность пробельных символов на единственный пробел,
 	# за исключением переносов строк
