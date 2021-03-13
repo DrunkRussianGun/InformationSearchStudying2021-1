@@ -3,7 +3,6 @@ import os
 import re as regex
 import string
 import sys
-import traceback
 from collections import deque
 from urllib.parse import urljoin
 
@@ -52,10 +51,10 @@ def run(root_page_url):
 
 		try:
 			page_html = BeautifulSoup(page, "html.parser")
-		except Exception:
+		except Exception as exception:
 			log.warning(
 				f"Не смог распознать страницу {page_url} как HTML:" + os.linesep
-				+ traceback.format_exc() + os.linesep + "Полученная страница:" + os.linesep + page)
+				+ format_exception(exception) + os.linesep + "Полученная страница:" + os.linesep + page)
 			continue
 
 		page_text = get_text(page_html)
@@ -67,10 +66,10 @@ def run(root_page_url):
 			document = Document(id_, page_url, page_text)
 			try:
 				documents.create(document)
-			except Exception:
+			except Exception as exception:
 				log.error(
 					f"Не смог сохранить страницу {page_url} под номером {id_}:" + os.linesep
-					+ traceback.format_exc())
+					+ format_exception(exception))
 
 		child_urls = set(get_link_urls(page_url, page_html))
 		child_urls = child_urls.difference(seen_page_urls)
