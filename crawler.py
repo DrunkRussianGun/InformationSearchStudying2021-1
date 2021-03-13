@@ -15,7 +15,7 @@ from implementation.document import Document, DocumentRepository
 
 log = logging.getLogger()
 
-punctuation_removing_map = {ord(symbol): " " for symbol in string.punctuation}
+punctuation_removing_map = {ord(symbol): " " for symbol in string.punctuation + "«»—–“”•☆№\""}
 
 max_pages_count = 100
 min_words_per_page_count = 1000
