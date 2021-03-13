@@ -1,6 +1,7 @@
 import logging
 import os
 import re as regex
+import string
 import sys
 import traceback
 from collections import deque
@@ -14,6 +15,8 @@ from implementation.common import configure_logging, format_exception
 from implementation.document import Document, DocumentRepository
 
 log = logging.getLogger()
+
+punctuation_removing_map = {ord(symbol): None for symbol in string.punctuation}
 
 max_pages_count = 100
 min_words_per_page_count = 1000
@@ -124,6 +127,8 @@ def preprocess_text(text):
 
 	# Убираем URL
 	text = regex.sub("((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?", " ", text)
+	# Убираем знаки пунктуации
+	text = text.translate(punctuation_removing_map)
 
 	# Заменяем каждую последовательность пробельных символов на единственный пробел,
 	# за исключением переносов строк
