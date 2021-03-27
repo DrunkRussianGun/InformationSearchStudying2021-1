@@ -3,12 +3,11 @@ import os
 import re as regex
 import string
 
-import en_core_web_md
-import ru_core_news_md
 import spacy
 from spacy import Language
 from spacy_langdetect import LanguageDetector
 
+from implementation.common import get_language_processor
 from implementation.infrastructure import configure_logging, format_exception
 from implementation.raw_document import RawDocumentRepository, raw_texts_repository_name
 from implementation.tokenized_document import TokenizedDocument, TokenizedDocumentRepository, \
@@ -17,7 +16,6 @@ from implementation.tokenized_document import TokenizedDocument, TokenizedDocume
 log = logging.getLogger()
 
 punctuation_whitespacing_map = {ord(symbol): " " for symbol in string.punctuation + "«»—–“”•☆№\""}
-language_processors_cache = {}
 
 
 def main():
@@ -73,22 +71,6 @@ def get_language_detector():
 	language_detector.add_pipe("sentencizer")
 	language_detector.add_pipe("language_detector")
 	return language_detector
-
-
-def get_language_processor(language_code):
-	processor = language_processors_cache.get(language_code)
-	if processor is not None:
-		return processor
-
-	if language_code == "en":
-		processor = en_core_web_md.load()
-	elif language_code == "ru":
-		processor = ru_core_news_md.load()
-	else:
-		processor = None
-
-	language_processors_cache[language_code] = processor
-	return processor
 
 
 def preprocess_text(text):
