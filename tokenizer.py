@@ -51,7 +51,9 @@ def run():
 		if language_processor is None:
 			log.error("Не нашёл обработчик языка " + page_language)
 			continue
-		lemmas = [token.lemma_ for token in language_processor(page.text)]
+		lemmas = [token.lemma_
+			for token in language_processor(page.text)
+			if not str.isspace(token.lemma_)]
 
 		document = TokenizedDocument(id_, page.url, page_language, lemmas)
 		try:
