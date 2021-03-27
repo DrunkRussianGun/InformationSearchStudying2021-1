@@ -1,6 +1,11 @@
 import logging
 import os
 import traceback
+from pathlib import Path
+
+from tinydb import TinyDB
+
+database_file_name = "database.json"
 
 
 class Singleton(type):
@@ -25,3 +30,7 @@ def configure_logging():
 
 def format_exception(exception):
 	return os.linesep.join(traceback.format_exception_only(type(exception), exception))
+
+
+def get_tinydb_table(database_file_path):
+	return TinyDB(database_file_path, encoding = "utf-8", ensure_ascii = False, separators = (",", ":"))
