@@ -9,7 +9,6 @@ class RawDocument:
 
 
 raw_texts_repository_name = "raw_texts"
-tokenized_texts_repository_name = "tokenized_texts"
 
 
 class RawDocumentRepository:

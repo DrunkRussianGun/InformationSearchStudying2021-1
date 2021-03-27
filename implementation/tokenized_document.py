@@ -4,6 +4,8 @@ from tinydb import table
 
 from implementation.infrastructure import get_tinydb_table
 
+tokenized_texts_repository_name = "tokenized_texts"
+
 
 class TokenizedDocument:
 	def __init__(self, id_, url, language_code, tokens):
