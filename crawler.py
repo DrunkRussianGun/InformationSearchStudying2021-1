@@ -9,8 +9,8 @@ import validators
 from bs4 import BeautifulSoup
 
 from implementation.common import delete_extra_whitespaces
-from implementation.document import Document, DocumentRepository, pages_repository_name
 from implementation.infrastructure import configure_logging, format_exception
+from implementation.raw_document import RawDocument, RawDocumentRepository, raw_texts_repository_name
 
 log = logging.getLogger()
 
@@ -30,7 +30,7 @@ def main():
 
 def run(root_page_url):
 	log.info("Инициализирую хранилище страниц")
-	pages = DocumentRepository(pages_repository_name)
+	pages = RawDocumentRepository(raw_texts_repository_name)
 	pages.delete_all()
 
 	page_urls_to_download = deque([root_page_url])
@@ -60,7 +60,7 @@ def run(root_page_url):
 
 			log.info("Сохраняю страницу " + page_url)
 			id_ = pages.get_new_id()
-			page = Document(id_, page_url, page_text)
+			page = RawDocument(id_, page_url, page_text)
 			try:
 				pages.create(page)
 			except Exception as exception:

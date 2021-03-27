@@ -10,9 +10,9 @@ from spacy import Language
 from spacy_langdetect import LanguageDetector
 
 from implementation.common import delete_extra_whitespaces
-from implementation.document import Document, DocumentRepository, pages_repository_name, \
-	tokenized_texts_repository_name
 from implementation.infrastructure import configure_logging, format_exception
+from implementation.raw_document import RawDocument, RawDocumentRepository, raw_texts_repository_name, \
+	tokenized_texts_repository_name
 
 log = logging.getLogger()
 
@@ -28,11 +28,11 @@ def main():
 
 def run():
 	log.info("Инициализирую хранилище страниц")
-	pages = DocumentRepository(pages_repository_name)
+	pages = RawDocumentRepository(raw_texts_repository_name)
 	page_ids = pages.get_all_ids()
 
 	log.info("Инициализирую хранилище токенизированных текстов")
-	tokenized_texts = DocumentRepository(tokenized_texts_repository_name)
+	tokenized_texts = RawDocumentRepository(tokenized_texts_repository_name)
 	tokenized_texts.delete_all()
 
 	language_detector = get_language_detector()
@@ -55,7 +55,7 @@ def run():
 
 		tokenized_text = " ".join(lemmas)
 		tokenized_text = delete_extra_whitespaces(tokenized_text)
-		document = Document(id_, page.url, tokenized_text)
+		document = RawDocument(id_, page.url, tokenized_text)
 		try:
 			tokenized_texts.create(document)
 		except Exception as exception:

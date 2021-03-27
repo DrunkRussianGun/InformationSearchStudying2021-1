@@ -1,18 +1,18 @@
 from pathlib import Path
 
 
-class Document:
+class RawDocument:
 	def __init__(self, id_, url, text):
 		self.id_ = id_
 		self.url = url
 		self.text = text
 
 
-pages_repository_name = "raw_pages"
+raw_texts_repository_name = "raw_texts"
 tokenized_texts_repository_name = "tokenized_texts"
 
 
-class DocumentRepository():
+class RawDocumentRepository:
 	__file_encoding = "utf-8"
 
 	def __init__(self, name = ""):
@@ -25,7 +25,7 @@ class DocumentRepository():
 		self.__index_file = open(
 			self.__index_full_file_name,
 			"a+",
-			encoding = DocumentRepository.__file_encoding)
+			encoding = RawDocumentRepository.__file_encoding)
 		self.__initialize_index_from_file(True)
 
 		self.__max_id = max(self.__id_to_url_map.keys(), default = -1)
@@ -42,11 +42,11 @@ class DocumentRepository():
 			return None
 
 		document_full_file_name = self.__get_document_full_file_name(id_)
-		with open(document_full_file_name, "r", encoding = DocumentRepository.__file_encoding) as file:
+		with open(document_full_file_name, "r", encoding = RawDocumentRepository.__file_encoding) as file:
 			text = file.read()
 
 		url = self.__id_to_url_map[id_]
-		return Document(id_, url, text)
+		return RawDocument(id_, url, text)
 
 	def create(self, document):
 		if document.id_ in self.__id_to_url_map:
@@ -55,7 +55,7 @@ class DocumentRepository():
 				+ f"т. к. документ с таким номером уже существует")
 
 		document_full_file_name = self.__get_document_full_file_name(document.id_)
-		with open(document_full_file_name, "w", encoding = DocumentRepository.__file_encoding) as file:
+		with open(document_full_file_name, "w", encoding = RawDocumentRepository.__file_encoding) as file:
 			file.write(document.text)
 
 		self.__append_index_line_to_file(document.id_, document.url)
